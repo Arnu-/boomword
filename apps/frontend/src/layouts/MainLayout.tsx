@@ -16,7 +16,7 @@ const { Header, Content, Sider } = Layout;
 const menuItems = [
   { key: '/', icon: <HomeOutlined />, label: '首页' },
   { key: '/wordbanks', icon: <BookOutlined />, label: '词库' },
-  { key: '/learning', icon: <ReadOutlined />, label: '学习' },
+  { key: '/learning', icon: <ReadOutlined />, label: '进度' },
   { key: '/ranking', icon: <TrophyOutlined />, label: '排行榜' },
   { key: '/achievements', icon: <StarOutlined />, label: '成就' },
 ];

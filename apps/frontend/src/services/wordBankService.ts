@@ -87,7 +87,7 @@ export const wordBankService = {
     return api.get(`/wordbanks/${wordBankId}/progress`);
   },
 
-  // 选择词库开始学习
+  // 选择词库开始挑战
   selectWordBank: (wordBankId: string): Promise<void> => {
     return api.post(`/wordbanks/${wordBankId}/select`);
   },

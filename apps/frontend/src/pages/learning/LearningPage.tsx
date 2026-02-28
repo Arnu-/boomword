@@ -53,8 +53,8 @@ const LearningPage = () => {
   const getMasteryTag = (level: number) => {
     if (level >= 5) return <Tag color="green">已掌握</Tag>;
     if (level >= 3) return <Tag color="blue">熟悉</Tag>;
-    if (level >= 1) return <Tag color="orange">学习中</Tag>;
-    return <Tag color="red">未学习</Tag>;
+    if (level >= 1) return <Tag color="orange">训练中</Tag>;
+    return <Tag color="red">未开始</Tag>;
   };
 
   const columns = [
@@ -123,7 +123,7 @@ const LearningPage = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">学习进度</h1>
+      <h1 className="text-2xl font-bold">我的进度</h1>
 
       <Tabs
         activeKey={activeTab}
@@ -160,7 +160,7 @@ const LearningPage = () => {
             label: (
               <span>
                 <BookOutlined className="mr-1" />
-                学习中 ({learningData?.pagination.total || 0})
+                训练中 ({learningData?.pagination.total || 0})
               </span>
             ),
             children: (
@@ -176,7 +176,7 @@ const LearningPage = () => {
                     }}
                   />
                 ) : (
-                  <Empty description="暂无学习中的单词" />
+                  <Empty description="暂无训练中的单词" />
                 )}
               </Card>
             ),

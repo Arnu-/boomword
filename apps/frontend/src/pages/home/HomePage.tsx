@@ -66,7 +66,7 @@ const HomePage = () => {
             icon={<PlayCircleOutlined />}
             onClick={() => navigate('/wordbanks')}
           >
-            开始学习
+            开始挑战
           </Button>
         </div>
         {dailyGoal && (
@@ -93,7 +93,7 @@ const HomePage = () => {
         <Col span={6}>
           <Card className="card-hover">
             <Statistic
-              title="学习中单词"
+              title="训练中单词"
               value={overview?.learningCount || 0}
               prefix={<BookOutlined className="text-blue-500" />}
               suffix="个"
@@ -103,7 +103,7 @@ const HomePage = () => {
         <Col span={6}>
           <Card className="card-hover">
             <Statistic
-              title="连续学习"
+              title="连续挑战"
               value={overview?.streakDays || 0}
               prefix={<FireOutlined className="text-orange-500" />}
               suffix="天"
@@ -122,15 +122,15 @@ const HomePage = () => {
         </Col>
       </Row>
 
-      {/* 今日学习 */}
-      <Card title="今日学习">
+      {/* 今日战绩 */}
+      <Card title="今日战绩">
         <Row gutter={16}>
           <Col span={8}>
             <div className="text-center">
               <div className="text-3xl font-bold text-primary-600">
                 {todayStats?.wordsLearned || 0}
               </div>
-              <div className="text-gray-500">学习单词数</div>
+              <div className="text-gray-500">挑战单词数</div>
             </div>
           </Col>
           <Col span={8}>
@@ -146,7 +146,7 @@ const HomePage = () => {
               <div className="text-3xl font-bold text-orange-600">
                 {Math.floor((todayStats?.duration || 0) / 60)}
               </div>
-              <div className="text-gray-500">学习时长(分钟)</div>
+              <div className="text-gray-500">游戏时长(分钟)</div>
             </div>
           </Col>
         </Row>
@@ -165,7 +165,7 @@ const HomePage = () => {
               </div>
               <div>
                 <div className="font-bold">词库</div>
-                <div className="text-gray-500 text-sm">选择词库开始学习</div>
+                <div className="text-gray-500 text-sm">选择词库开始挑战</div>
               </div>
             </div>
           </Card>
@@ -181,7 +181,7 @@ const HomePage = () => {
               </div>
               <div>
                 <div className="font-bold">排行榜</div>
-                <div className="text-gray-500 text-sm">查看学习排名</div>
+                <div className="text-gray-500 text-sm">查看玩家排名</div>
               </div>
             </div>
           </Card>

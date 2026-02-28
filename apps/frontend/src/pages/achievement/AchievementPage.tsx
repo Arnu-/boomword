@@ -63,7 +63,7 @@ const AchievementPage = () => {
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       words_mastered: '单词掌握',
-      streak_days: '连续学习',
+      streak_days: '连续挑战',
       total_score: '累计得分',
       perfect_games: '满星游戏',
       total_games: '游戏次数',

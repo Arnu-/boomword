@@ -117,7 +117,7 @@ const ProfilePage = () => {
 
           <Form.Item
             name="dailyGoal"
-            label="每日学习目标（单词数）"
+            label="每日挑战目标（单词数）"
             rules={[{ required: true, message: '请设置每日目标' }]}
           >
             <InputNumber
