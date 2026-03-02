@@ -4,10 +4,12 @@ import { immer } from 'zustand/middleware/immer';
 export type GameMode = 'practice' | 'challenge';
 export type GameStatus = 'idle' | 'playing' | 'paused' | 'finished';
 
-interface Word {
+export interface Word {
   id: string;
   chinese: string;
-  english?: string; // 练习模式有，挑战模式无
+  english?: string;
+  phonetic?: string;
+  difficulty?: number;
 }
 
 interface GameState {
@@ -16,81 +18,93 @@ interface GameState {
   mode: GameMode;
   gameRecordId: string | null;
   
-  // 当前单词
-  currentWord: Word | null;
-  currentIndex: number;
+  // 单词列表
+  words: Word[];
+  answeredWordIds: string[];
   totalWords: number;
   
   // 分数统计
   score: number;
   correctCount: number;
   wrongCount: number;
+  combo: number;
+  maxCombo: number;
   
   // 时间
   startTime: number | null;
   elapsedTime: number;
-  wordStartTime: number | null;
   
   // 输入
   userInput: string;
   isInputShaking: boolean;
+  
+  // 最近消除的泡泡（用于动画）
+  poppingWordId: string | null;
 }
 
 interface GameActions {
   // 游戏控制
-  startGame: (gameRecordId: string, mode: GameMode, totalWords: number, firstWord: Word) => void;
+  startGame: (gameRecordId: string, mode: GameMode, words: Word[]) => void;
   endGame: () => void;
   pauseGame: () => void;
   resumeGame: () => void;
   
   // 答题
-  setNextWord: (word: Word | null, result: { isCorrect: boolean; score: number }) => void;
+  markWordAnswered: (wordId: string, result: { isCorrect: boolean; score: number; combo: number; maxCombo: number }) => void;
   setUserInput: (input: string) => void;
   shakeInput: () => void;
+  clearPoppingWord: () => void;
   
   // 时间
   updateElapsedTime: () => void;
   
   // 重置
   resetGame: () => void;
+  
+  // 计算属性
+  getRemainingWords: () => Word[];
 }
 
 const initialState: GameState = {
   status: 'idle',
   mode: 'practice',
   gameRecordId: null,
-  currentWord: null,
-  currentIndex: 0,
+  words: [],
+  answeredWordIds: [],
   totalWords: 0,
   score: 0,
   correctCount: 0,
   wrongCount: 0,
+  combo: 0,
+  maxCombo: 0,
   startTime: null,
   elapsedTime: 0,
-  wordStartTime: null,
   userInput: '',
   isInputShaking: false,
+  poppingWordId: null,
 };
 
 export const useGameStore = create<GameState & GameActions>()(
   immer((set, get) => ({
     ...initialState,
 
-    startGame: (gameRecordId, mode, totalWords, firstWord) =>
+    startGame: (gameRecordId, mode, words) =>
       set((state) => {
         state.status = 'playing';
         state.mode = mode;
         state.gameRecordId = gameRecordId;
-        state.totalWords = totalWords;
-        state.currentWord = firstWord;
-        state.currentIndex = 0;
+        state.words = words;
+        state.answeredWordIds = [];
+        state.totalWords = words.length;
         state.score = 0;
         state.correctCount = 0;
         state.wrongCount = 0;
+        state.combo = 0;
+        state.maxCombo = 0;
         state.startTime = Date.now();
-        state.wordStartTime = Date.now();
         state.elapsedTime = 0;
         state.userInput = '';
+        state.poppingWordId = null;
       }),
 
     endGame: () =>
@@ -109,24 +123,25 @@ export const useGameStore = create<GameState & GameActions>()(
       set((state) => {
         if (state.status === 'paused') {
           state.status = 'playing';
-          state.wordStartTime = Date.now();
         }
       }),
 
-    setNextWord: (word, result) =>
+    markWordAnswered: (wordId, result) =>
       set((state) => {
         if (result.isCorrect) {
           state.correctCount++;
+          state.poppingWordId = wordId;
         } else {
           state.wrongCount++;
         }
         state.score += result.score;
-        state.currentIndex++;
-        state.currentWord = word;
-        state.wordStartTime = Date.now();
+        state.combo = result.combo;
+        state.maxCombo = result.maxCombo;
+        state.answeredWordIds.push(wordId);
         state.userInput = '';
         
-        if (!word) {
+        // 检查是否所有单词都已回答
+        if (state.answeredWordIds.length >= state.words.length) {
           state.status = 'finished';
         }
       }),
@@ -147,6 +162,11 @@ export const useGameStore = create<GameState & GameActions>()(
       }, 500);
     },
 
+    clearPoppingWord: () =>
+      set((state) => {
+        state.poppingWordId = null;
+      }),
+
     updateElapsedTime: () =>
       set((state) => {
         if (state.status === 'playing' && state.startTime) {
@@ -155,5 +175,10 @@ export const useGameStore = create<GameState & GameActions>()(
       }),
 
     resetGame: () => set(initialState),
+
+    getRemainingWords: () => {
+      const state = get();
+      return state.words.filter(w => !state.answeredWordIds.includes(w.id));
+    },
   })),
 );

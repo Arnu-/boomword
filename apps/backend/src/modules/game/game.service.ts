@@ -105,10 +105,11 @@ export class GameService {
    * 开始游戏
    */
   async startGame(userId: string, dto: StartGameDto) {
-    // 检查是否有进行中的游戏
+    // 检查是否有进行中的游戏，如果有则自动清理
     const existingSession = await this.getActiveGameSession(userId);
     if (existingSession) {
-      throw new BadRequestException('您有正在进行的游戏，请先完成或结束当前游戏');
+      // 自动结束旧游戏并清理会话
+      await this.forceEndGame(existingSession);
     }
 
     // 获取小节信息和单词列表
@@ -144,7 +145,7 @@ export class GameService {
     }
 
     // 获取用户小节进度
-    const userSection = await this.prisma.userSection.findUnique({
+    let userSection = await this.prisma.userSection.findUnique({
       where: {
         userId_sectionId: {
           userId,
@@ -152,6 +153,29 @@ export class GameService {
         },
       },
     });
+
+    // 检查是否是第一个小节（第一章第一关默认解锁）
+    const isFirstSection = section.order === 1 && section.chapter.order === 1;
+    
+    // 如果是第一个小节，确保解锁
+    if (isFirstSection && (!userSection || !userSection.unlocked)) {
+      userSection = await this.prisma.userSection.upsert({
+        where: {
+          userId_sectionId: {
+            userId,
+            sectionId: dto.sectionId,
+          },
+        },
+        create: {
+          userId,
+          sectionId: dto.sectionId,
+          unlocked: true,
+        },
+        update: {
+          unlocked: true,
+        },
+      });
+    }
 
     // 检查解锁状态
     if (!userSection || !userSection.unlocked) {

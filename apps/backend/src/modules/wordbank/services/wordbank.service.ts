@@ -142,23 +142,101 @@ export class WordBankService {
   }
 
   async getProgress(bankId: string, userId: string) {
-    const userWordBank = await this.prisma.userWordBank.findUnique({
-      where: {
-        userId_wordBankId: { userId, wordBankId: bankId },
+    // 获取词库详情
+    const wordBank = await this.prisma.wordBank.findUnique({
+      where: { id: bankId },
+      include: {
+        chapters: {
+          where: { isActive: true },
+          orderBy: { order: 'asc' },
+          include: {
+            sections: {
+              where: { isActive: true },
+              orderBy: { order: 'asc' },
+            },
+          },
+        },
       },
     });
 
-    const wordBank = await this.prisma.wordBank.findUnique({
-      where: { id: bankId },
-      select: { wordCount: true },
+    if (!wordBank) {
+      throw new NotFoundException('词库不存在');
+    }
+
+    // 获取用户小节进度
+    const userSections = await this.prisma.userSection.findMany({
+      where: {
+        userId,
+        section: {
+          chapter: {
+            wordBankId: bankId,
+          },
+        },
+      },
+    });
+
+    const sectionProgressMap = new Map(userSections.map((s) => [s.sectionId, s]));
+
+    // 计算进度统计
+    let completedSections = 0;
+    let totalSections = 0;
+    let totalStars = 0;
+    let maxStars = 0;
+
+    const chapters = wordBank.chapters.map((chapter, chapterIndex) => {
+      const sections = chapter.sections.map((section, sectionIndex) => {
+        totalSections++;
+        maxStars += 3;
+
+        const userSection = sectionProgressMap.get(section.id);
+        const stars = Math.max(userSection?.practiceStars || 0, userSection?.challengeStars || 0);
+        const isCompleted = stars > 0;
+        
+        // 第一个小节默认解锁，或者前一个小节完成后解锁
+        const isUnlocked = (chapterIndex === 0 && sectionIndex === 0) || 
+                          userSection?.unlocked || 
+                          isCompleted;
+
+        if (isCompleted) {
+          completedSections++;
+          totalStars += stars;
+        }
+
+        return {
+          id: section.id,
+          name: section.name,
+          order: section.order,
+          wordCount: section.wordCount,
+          isUnlocked,
+          isCompleted,
+          stars,
+          bestScore: Math.max(userSection?.practiceBestScore || 0, userSection?.challengeBestScore || 0),
+        };
+      });
+
+      return {
+        id: chapter.id,
+        name: chapter.name,
+        order: chapter.order,
+        sections,
+      };
     });
 
     return {
-      learnedCount: userWordBank?.learnedCount || 0,
-      masteredCount: userWordBank?.masteredCount || 0,
-      totalCount: wordBank?.wordCount || 0,
-      progress: userWordBank?.progress || 0,
-      lastStudyAt: userWordBank?.lastStudyAt,
+      wordBank: {
+        id: wordBank.id,
+        name: wordBank.name,
+        description: wordBank.description,
+        totalWords: wordBank.wordCount,
+      },
+      progress: {
+        completedSections,
+        totalSections,
+        percentage: totalSections > 0 ? Math.round((completedSections / totalSections) * 100) : 0,
+        totalStars,
+        maxStars,
+      },
+      chapters,
     };
   }
 }

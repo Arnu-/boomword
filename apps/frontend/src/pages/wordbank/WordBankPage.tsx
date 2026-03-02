@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Row, Col, Tag, Spin, Empty, Tabs } from 'antd';
-import { BookOutlined, StarFilled } from '@ant-design/icons';
-import { wordBankService, WordBank, Category } from '@/services/wordBankService';
+import { Spin } from 'antd';
+import { AppstoreOutlined } from '@ant-design/icons';
+import { wordBankService, WordBank } from '@/services/wordBankService';
+import RightSidebar from '@/components/RightSidebar';
+
+// 词库图标映射（根据词库名称/索引分配图标）
+const bankIcons = ['⭐', '📘', '🎓', '🏆', '📚', '🌍', '📖', '🎯', '💎', '🔥'];
 
 const WordBankPage = () => {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<Category[]>([]);
   const [wordBanks, setWordBanks] = useState<WordBank[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<string>('all');
 
   useEffect(() => {
     fetchData();
@@ -17,11 +19,7 @@ const WordBankPage = () => {
 
   const fetchData = async () => {
     try {
-      const [categoriesData, wordBanksData] = await Promise.all([
-        wordBankService.getCategories(),
-        wordBankService.getWordBanks(),
-      ]);
-      setCategories(categoriesData);
+      const wordBanksData = await wordBankService.getWordBanks();
       setWordBanks(wordBanksData);
     } catch (error) {
       console.error('获取数据失败', error);
@@ -30,103 +28,97 @@ const WordBankPage = () => {
     }
   };
 
-  const filteredWordBanks = activeCategory === 'all'
-    ? wordBanks
-    : wordBanks.filter((wb) => wb.category?.id === activeCategory);
-
-  const getDifficultyTag = (difficulty: number) => {
-    const configs = [
-      { color: 'green', text: '入门' },
-      { color: 'blue', text: '初级' },
-      { color: 'orange', text: '中级' },
-      { color: 'red', text: '高级' },
-      { color: 'purple', text: '专家' },
-    ];
-    const config = configs[Math.min(difficulty - 1, 4)];
-    return <Tag color={config.color}>{config.text}</Tag>;
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="dark-main flex items-center justify-center h-64">
         <Spin size="large" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">词库</h1>
+    <>
+      <div className="dark-main">
+        {/* 页面标题 */}
+        <div>
+          <h1 className="text-2xl font-bold text-dark-text flex items-center gap-2">
+            <AppstoreOutlined /> 选择词库
+          </h1>
+          <p className="text-dark-text-secondary mt-1 text-sm">
+            选择你想要挑战的词库，开始学习之旅！
+          </p>
+        </div>
+
+        {/* 词库网格 */}
+        <div className="wordbank-grid">
+          {wordBanks.map((bank, index) => {
+            const icon = bankIcons[index % bankIcons.length];
+            const chaptersCount = 3; // mock，实际应从 API 获取
+            const wordsPerBank = bank.totalWords;
+            const progress = Math.floor(Math.random() * 80); // mock 进度
+
+            return (
+              <div
+                key={bank.id}
+                className="wordbank-card"
+                onClick={() => navigate(`/wordbanks/${bank.id}`)}
+              >
+                {/* 顶部颜色条 */}
+                <div
+                  className="wordbank-card-accent"
+                  style={{
+                    background: [
+                      'linear-gradient(90deg, #6C5CE7, #8B7CF6)',
+                      'linear-gradient(90deg, #28A745, #5BD778)',
+                      'linear-gradient(90deg, #3B82F6, #60A5FA)',
+                      'linear-gradient(90deg, #F59E0B, #FBBF24)',
+                      'linear-gradient(90deg, #EF4444, #F87171)',
+                      'linear-gradient(90deg, #8B5CF6, #A78BFA)',
+                    ][index % 6],
+                  }}
+                />
+
+                {/* 图标 */}
+                <div className="wordbank-card-icon">{icon}</div>
+
+                {/* 名称 */}
+                <div className="wordbank-card-name">{bank.name}</div>
+
+                {/* 描述 */}
+                <div className="wordbank-card-desc">
+                  {bank.description || `${bank.category?.name || '综合'}词汇`}
+                </div>
+
+                {/* 统计信息 */}
+                <div className="wordbank-card-stats">
+                  {chaptersCount} 关卡 · {wordsPerBank} 个单词
+                </div>
+
+                {/* 进度条 */}
+                <div className="wordbank-card-progress">
+                  <div
+                    className="wordbank-card-progress-fill"
+                    style={{
+                      width: `${progress}%`,
+                      background: [
+                        '#6C5CE7',
+                        '#28A745',
+                        '#3B82F6',
+                        '#F59E0B',
+                        '#EF4444',
+                        '#8B5CF6',
+                      ][index % 6],
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* 分类标签 */}
-      <Tabs
-        activeKey={activeCategory}
-        onChange={setActiveCategory}
-        items={[
-          { key: 'all', label: '全部' },
-          ...categories.map((cat) => ({
-            key: cat.id,
-            label: `${cat.name} (${cat.wordBankCount})`,
-          })),
-        ]}
-      />
-
-      {/* 词库列表 */}
-      {filteredWordBanks.length === 0 ? (
-        <Empty description="暂无词库" />
-      ) : (
-        <Row gutter={[16, 16]}>
-          {filteredWordBanks.map((wordBank) => (
-            <Col key={wordBank.id} xs={24} sm={12} md={8} lg={6}>
-              <Card
-                hoverable
-                className="card-hover"
-                cover={
-                  wordBank.coverImage ? (
-                    <img
-                      alt={wordBank.name}
-                      src={wordBank.coverImage}
-                      className="h-32 object-cover"
-                    />
-                  ) : (
-                    <div className="h-32 bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
-                      <BookOutlined className="text-5xl text-white" />
-                    </div>
-                  )
-                }
-                onClick={() => navigate(`/wordbanks/${wordBank.id}`)}
-              >
-                <Card.Meta
-                  title={
-                    <div className="flex items-center justify-between">
-                      <span className="truncate">{wordBank.name}</span>
-                      {getDifficultyTag(wordBank.difficulty)}
-                    </div>
-                  }
-                  description={
-                    <div>
-                      <p className="text-gray-500 truncate mb-2">
-                        {wordBank.description || '暂无描述'}
-                      </p>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">
-                          {wordBank.totalWords} 个单词
-                        </span>
-                        {wordBank.category && (
-                          <Tag>{wordBank.category.name}</Tag>
-                        )}
-                      </div>
-                    </div>
-                  }
-                />
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      )}
-    </div>
+      <RightSidebar />
+    </>
   );
 };
 

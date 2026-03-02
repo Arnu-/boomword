@@ -7,14 +7,24 @@ export interface StartGameParams {
   mode: GameMode;
 }
 
+export interface GameWord {
+  id: string;
+  chinese: string;
+  english?: string;
+  phonetic?: string;
+  difficulty?: number;
+}
+
 export interface StartGameResponse {
   gameRecordId: string;
   mode: GameMode;
   totalWords: number;
-  currentWord: {
+  words: GameWord[];
+  sectionInfo: {
     id: string;
-    chinese: string;
-    english?: string;
+    name: string;
+    chapterName: string;
+    wordBankName: string;
   };
 }
 
@@ -32,12 +42,9 @@ export interface SubmitAnswerResponse {
   totalScore: number;
   correctCount: number;
   wrongCount: number;
-  hasNext: boolean;
-  nextWord: {
-    id: string;
-    chinese: string;
-    english?: string;
-  } | null;
+  combo: number;
+  maxCombo: number;
+  isCompleted: boolean;
   progress: {
     current: number;
     total: number;
