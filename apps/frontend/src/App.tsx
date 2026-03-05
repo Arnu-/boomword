@@ -3,6 +3,7 @@ import { Suspense, lazy } from 'react';
 import { Spin } from 'antd';
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
+import AdminLayout from './layouts/AdminLayout';
 import { useAuthStore } from './stores/authStore';
 
 // 懒加载页面组件
@@ -22,6 +23,11 @@ const FriendsPage = lazy(() => import('./pages/friends/FriendsPage'));
 const ChallengePage = lazy(() => import('./pages/challenge/ChallengePage'));
 const SettingsPage = lazy(() => import('./pages/settings/SettingsPage'));
 
+// 管理后台页面
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
+const AdminWordBanksPage = lazy(() => import('./pages/admin/AdminWordBanksPage'));
+
 // 加载组件
 const PageLoading = () => (
   <div className="h-screen w-screen flex items-center justify-center">
@@ -40,6 +46,21 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// 管理员路由守卫
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, user } = useAuthStore();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (user && !['admin', 'super_admin'].includes(user.role || '')) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 function App() {
   return (
     <BrowserRouter>
@@ -49,6 +70,20 @@ function App() {
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+          </Route>
+
+          {/* 管理后台路由 */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
+            }
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="wordbanks" element={<AdminWordBanksPage />} />
           </Route>
 
           {/* 主应用路由 */}

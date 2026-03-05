@@ -21,6 +21,7 @@ export interface AuthResponse {
     email?: string;
     phone?: string;
     avatar?: string;
+    role?: string;
     level: number;
     experience: number;
     dailyGoal: number;

@@ -29,8 +29,9 @@ export class AdminController {
     @Query('page') page = 1,
     @Query('limit') limit = 20,
     @Query('keyword') keyword?: string,
+    @Query('status') status?: string,
   ) {
-    return this.adminService.getUsers(+page, +limit, keyword);
+    return this.adminService.getUsers(+page, +limit, keyword, status);
   }
 
   @Get('users/:id')
@@ -43,9 +44,75 @@ export class AdminController {
   @ApiOperation({ summary: '更新用户状态' })
   async updateUserStatus(
     @Param('id') id: string,
-    @Body() body: { status: 'active' | 'banned' },
+    @Body() body: { status: string },
   ) {
     return this.adminService.updateUserStatus(id, body.status);
+  }
+
+  @Put('users/:id/role')
+  @ApiOperation({ summary: '更新用户角色' })
+  async updateUserRole(
+    @Param('id') id: string,
+    @Body() body: { role: string },
+  ) {
+    return this.adminService.updateUserRole(id, body.role);
+  }
+
+  @Post('users/:id/reset-password')
+  @ApiOperation({ summary: '重置用户密码' })
+  async resetUserPassword(
+    @Param('id') id: string,
+    @Body() body: { newPassword: string },
+  ) {
+    return this.adminService.resetUserPassword(id, body.newPassword);
+  }
+
+  @Get('users/:id/game-records')
+  @ApiOperation({ summary: '获取用户游戏记录' })
+  async getUserGameRecords(
+    @Param('id') id: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('mode') mode?: string,
+  ) {
+    return this.adminService.getUserGameRecords(id, +page, +limit, mode);
+  }
+
+  @Get('users/:id/progress')
+  @ApiOperation({ summary: '获取用户学习进度' })
+  async getUserProgress(@Param('id') id: string) {
+    return this.adminService.getUserProgress(id);
+  }
+
+  // ==================== 分类管理 ====================
+
+  @Get('categories')
+  @ApiOperation({ summary: '获取分类列表' })
+  async getCategories() {
+    return this.adminService.getCategories();
+  }
+
+  @Post('categories')
+  @ApiOperation({ summary: '创建分类' })
+  async createCategory(
+    @Body() body: { name: string; code: string; description?: string; parentId?: string; sort?: number },
+  ) {
+    return this.adminService.createCategory(body);
+  }
+
+  @Put('categories/:id')
+  @ApiOperation({ summary: '更新分类' })
+  async updateCategory(
+    @Param('id') id: string,
+    @Body() body: { name?: string; description?: string; sort?: number; isActive?: boolean },
+  ) {
+    return this.adminService.updateCategory(id, body);
+  }
+
+  @Delete('categories/:id')
+  @ApiOperation({ summary: '删除分类' })
+  async deleteCategory(@Param('id') id: string) {
+    return this.adminService.deleteCategory(id);
   }
 
   // ==================== 词库管理 ====================
@@ -55,8 +122,10 @@ export class AdminController {
   async getWordBanks(
     @Query('page') page = 1,
     @Query('limit') limit = 20,
+    @Query('keyword') keyword?: string,
+    @Query('categoryId') categoryId?: string,
   ) {
-    return this.adminService.getWordBanks(+page, +limit);
+    return this.adminService.getWordBanks(+page, +limit, keyword, categoryId);
   }
 
   @Post('wordbanks')
@@ -69,6 +138,8 @@ export class AdminController {
       coverImage?: string;
       difficulty?: number;
       categoryId: string;
+      isFree?: boolean;
+      sort?: number;
     },
   ) {
     return this.adminService.createWordBank(body);
@@ -84,6 +155,8 @@ export class AdminController {
       coverImage?: string;
       difficulty?: number;
       isActive?: boolean;
+      isFree?: boolean;
+      sort?: number;
     },
   ) {
     return this.adminService.updateWordBank(id, body);
@@ -107,7 +180,7 @@ export class AdminController {
   @ApiOperation({ summary: '创建章节' })
   async createChapter(
     @Param('wordBankId') wordBankId: string,
-    @Body() body: { name: string; order?: number },
+    @Body() body: { name: string; description?: string; order?: number },
   ) {
     return this.adminService.createChapter(wordBankId, body);
   }
@@ -116,7 +189,7 @@ export class AdminController {
   @ApiOperation({ summary: '更新章节' })
   async updateChapter(
     @Param('id') id: string,
-    @Body() body: { name?: string; order?: number },
+    @Body() body: { name?: string; description?: string; order?: number; isActive?: boolean },
   ) {
     return this.adminService.updateChapter(id, body);
   }
@@ -139,7 +212,7 @@ export class AdminController {
   @ApiOperation({ summary: '创建小节' })
   async createSection(
     @Param('chapterId') chapterId: string,
-    @Body() body: { name: string; order?: number },
+    @Body() body: { name: string; order?: number; timeLimit?: number },
   ) {
     return this.adminService.createSection(chapterId, body);
   }
@@ -148,7 +221,7 @@ export class AdminController {
   @ApiOperation({ summary: '更新小节' })
   async updateSection(
     @Param('id') id: string,
-    @Body() body: { name?: string; order?: number },
+    @Body() body: { name?: string; order?: number; timeLimit?: number; isActive?: boolean },
   ) {
     return this.adminService.updateSection(id, body);
   }
@@ -160,6 +233,55 @@ export class AdminController {
   }
 
   // ==================== 单词管理 ====================
+
+  @Get('words')
+  @ApiOperation({ summary: '获取全局单词列表' })
+  async getWords(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('keyword') keyword?: string,
+  ) {
+    return this.adminService.getWords(+page, +limit, keyword);
+  }
+
+  @Post('words')
+  @ApiOperation({ summary: '创建单词' })
+  async createWord(
+    @Body() body: {
+      english: string;
+      chinese: string;
+      phonetic?: string;
+      difficulty?: number;
+      exampleSentence?: string;
+      exampleChinese?: string;
+      tags?: string[];
+    },
+  ) {
+    return this.adminService.createWord(body);
+  }
+
+  @Put('words/:id')
+  @ApiOperation({ summary: '更新单词' })
+  async updateWord(
+    @Param('id') id: string,
+    @Body() body: {
+      english?: string;
+      chinese?: string;
+      phonetic?: string;
+      difficulty?: number;
+      exampleSentence?: string;
+      exampleChinese?: string;
+      tags?: string[];
+    },
+  ) {
+    return this.adminService.updateWord(id, body);
+  }
+
+  @Delete('words/:id')
+  @ApiOperation({ summary: '删除单词' })
+  async deleteWord(@Param('id') id: string) {
+    return this.adminService.deleteWord(id);
+  }
 
   @Get('sections/:sectionId/words')
   @ApiOperation({ summary: '获取小节单词列表' })
@@ -174,6 +296,15 @@ export class AdminController {
     @Body() body: { wordId: string; order?: number },
   ) {
     return this.adminService.addWordToSection(sectionId, body);
+  }
+
+  @Post('sections/:sectionId/words/batch')
+  @ApiOperation({ summary: '批量添加单词到小节' })
+  async batchAddWordsToSection(
+    @Param('sectionId') sectionId: string,
+    @Body() body: { wordIds: string[] },
+  ) {
+    return this.adminService.batchAddWordsToSection(sectionId, body.wordIds);
   }
 
   @Delete('sections/:sectionId/words/:wordId')
@@ -197,5 +328,11 @@ export class AdminController {
   @ApiOperation({ summary: '获取每日统计' })
   async getDailyStats(@Query('days') days = 30) {
     return this.adminService.getDailyStats(+days);
+  }
+
+  @Get('statistics/game-modes')
+  @ApiOperation({ summary: '获取游戏模式分布统计' })
+  async getGameModeStats() {
+    return this.adminService.getGameModeStats();
   }
 }
