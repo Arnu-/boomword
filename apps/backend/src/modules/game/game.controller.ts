@@ -112,4 +112,11 @@ export class GameController {
   async getUserGameStats(@Request() req) {
     return this.gameService.getUserGameStats(req.user.id);
   }
+
+  @Get('next-section')
+  @ApiOperation({ summary: '获取下一关信息', description: '获取用户最后一次通过的关（不区分模式）的下一关信息，以指定模式进入' })
+  @ApiQuery({ name: 'mode', required: false, enum: GameMode, description: '目标游戏模式（practice/challenge）', example: 'practice' })
+  async getNextSection(@Request() req, @Query('mode') mode?: GameMode) {
+    return this.gameService.getNextSection(req.user.id, mode || GameMode.PRACTICE);
+  }
 }

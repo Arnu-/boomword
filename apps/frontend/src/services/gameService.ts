@@ -103,6 +103,16 @@ export interface GameRecord {
   };
 }
 
+export interface NextSectionInfo {
+  sectionId: string;
+  sectionName: string;
+  chapterName: string;
+  wordBankName: string;
+  wordCount: number;
+  isFirst?: boolean;
+  isLast?: boolean;
+}
+
 export const gameService = {
   // 开始游戏
   startGame: (params: StartGameParams): Promise<StartGameResponse> => {
@@ -132,5 +142,10 @@ export const gameService = {
   // 获取游戏历史
   getGameHistory: (): Promise<GameRecord[]> => {
     return api.get('/game/history');
+  },
+
+  // 获取下一关信息（最后一次通过的关的下一关）
+  getNextSection: (mode: GameMode): Promise<NextSectionInfo | null> => {
+    return api.get(`/game/next-section?mode=${mode}`);
   },
 };

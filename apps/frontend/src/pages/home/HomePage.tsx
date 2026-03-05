@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Spin } from 'antd';
+import { Spin, message } from 'antd';
 import {
-  PlayCircleFilled,
-  SwapOutlined,
   ClockCircleOutlined,
   RetweetOutlined,
   CoffeeOutlined,
+  ThunderboltFilled,
+  TrophyFilled,
+  RightOutlined,
+  BookOutlined,
 } from '@ant-design/icons';
 import { useLearningStore } from '@/stores/learningStore';
+import { gameService } from '@/services/gameService';
 import api from '@/services/api';
 import RightSidebar from '@/components/RightSidebar';
 
@@ -16,6 +19,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { todayStats, setOverview, setTodayStats, setDailyGoal } = useLearningStore();
   const [loading, setLoading] = useState(true);
+  const [quickStartLoading, setQuickStartLoading] = useState<'practice' | 'challenge' | null>(null);
 
   useEffect(() => {
     fetchOverview();
@@ -33,6 +37,23 @@ const HomePage = () => {
       console.error('获取数据失败', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleQuickStart = async (mode: 'practice' | 'challenge') => {
+    setQuickStartLoading(mode);
+    try {
+      const nextSection = await gameService.getNextSection(mode);
+      if (!nextSection) {
+        message.warning('暂无可用关卡，请先添加词库');
+        navigate('/wordbanks');
+        return;
+      }
+      navigate(`/game/${nextSection.sectionId}?mode=${mode}`);
+    } catch (error) {
+      message.error('获取关卡信息失败，请重试');
+    } finally {
+      setQuickStartLoading(null);
     }
   };
 
@@ -86,12 +107,43 @@ const HomePage = () => {
           <p className="text-dark-text-secondary mb-6 relative z-10">
             戳破泡泡，输入单词，赢取高分！
           </p>
-          <div className="flex items-center justify-center gap-3 relative z-10">
-            <button className="btn-primary" onClick={() => navigate('/wordbanks')}>
-              <PlayCircleFilled /> 立即开始
+          <div className="flex items-center justify-center gap-4 relative z-10">
+            {/* 快速开始训练按钮 */}
+            <button
+              className="quick-start-btn quick-start-practice"
+              onClick={() => handleQuickStart('practice')}
+              disabled={quickStartLoading !== null}
+            >
+              {quickStartLoading === 'practice' ? (
+                <Spin size="small" />
+              ) : (
+                <ThunderboltFilled className="quick-start-icon" />
+              )}
+              <span className="quick-start-text">
+                <span className="quick-start-label">快速开始训练</span>
+                <span className="quick-start-sub">
+                  <BookOutlined /> 练习模式 <RightOutlined />
+                </span>
+              </span>
             </button>
-            <button className="btn-secondary" onClick={() => navigate('/wordbanks')}>
-              <SwapOutlined /> 练习模式
+
+            {/* 快速开始挑战按钮 */}
+            <button
+              className="quick-start-btn quick-start-challenge"
+              onClick={() => handleQuickStart('challenge')}
+              disabled={quickStartLoading !== null}
+            >
+              {quickStartLoading === 'challenge' ? (
+                <Spin size="small" />
+              ) : (
+                <TrophyFilled className="quick-start-icon" />
+              )}
+              <span className="quick-start-text">
+                <span className="quick-start-label">快速开始挑战</span>
+                <span className="quick-start-sub">
+                  <TrophyFilled /> 挑战模式 <RightOutlined />
+                </span>
+              </span>
             </button>
           </div>
         </div>

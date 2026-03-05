@@ -799,6 +799,131 @@ export class GameService {
     };
   }
 
+  /**
+   * 获取用户下一关信息（最后一次通过的关的下一关，不区分模式）
+   */
+  async getNextSection(userId: string, mode: GameMode) {
+    // 查找用户最近一次通过的游戏记录（stars >= 1，不区分模式）
+    const lastPassedRecord = await this.prisma.gameRecord.findFirst({
+      where: {
+        userId,
+        stars: { gte: 1 },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        section: {
+          include: {
+            chapter: {
+              include: {
+                wordBank: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // 如果没有通过记录，返回第一个可用关卡
+    if (!lastPassedRecord) {
+      const firstSection = await this.prisma.section.findFirst({
+        where: { isActive: true },
+        orderBy: [
+          { chapter: { wordBank: { sort: 'asc' } } },
+          { chapter: { order: 'asc' } },
+          { order: 'asc' },
+        ],
+        include: {
+          chapter: {
+            include: { wordBank: true },
+          },
+        },
+      });
+
+      if (!firstSection) {
+        return null;
+      }
+
+      return {
+        sectionId: firstSection.id,
+        sectionName: firstSection.name,
+        chapterName: firstSection.chapter.name,
+        wordBankName: firstSection.chapter.wordBank.name,
+        wordCount: firstSection.wordCount,
+        isFirst: true,
+      };
+    }
+
+    const currentSection = lastPassedRecord.section;
+
+    // 查找同章节下一个小节
+    let nextSection = await this.prisma.section.findFirst({
+      where: {
+        chapterId: currentSection.chapterId,
+        order: { gt: currentSection.order },
+        isActive: true,
+      },
+      orderBy: { order: 'asc' },
+      include: {
+        chapter: {
+          include: { wordBank: true },
+        },
+      },
+    });
+
+    // 如果当前章节没有下一个小节，查找下一章节的第一个小节
+    if (!nextSection) {
+      const nextChapter = await this.prisma.chapter.findFirst({
+        where: {
+          wordBankId: currentSection.chapter.wordBankId,
+          order: { gt: currentSection.chapter.order },
+          isActive: true,
+        },
+        orderBy: { order: 'asc' },
+        include: {
+          wordBank: true,
+          sections: {
+            where: { isActive: true },
+            orderBy: { order: 'asc' },
+            take: 1,
+          },
+        },
+      });
+
+      if (nextChapter && nextChapter.sections.length > 0) {
+        const sec = nextChapter.sections[0];
+        nextSection = {
+          ...sec,
+          chapter: {
+            ...nextChapter,
+            sections: nextChapter.sections,
+          },
+        } as any;
+      }
+    }
+
+    // 如果没有下一关，说明已通关所有关卡，返回当前最后一关
+    if (!nextSection) {
+      return {
+        sectionId: currentSection.id,
+        sectionName: currentSection.name,
+        chapterName: currentSection.chapter.name,
+        wordBankName: currentSection.chapter.wordBank.name,
+        wordCount: currentSection.wordCount,
+        isLast: true,
+      };
+    }
+
+    return {
+      sectionId: nextSection.id,
+      sectionName: nextSection.name,
+      chapterName: nextSection.chapter.name,
+      wordBankName: nextSection.chapter.wordBank.name,
+      wordCount: nextSection.wordCount,
+      isFirst: false,
+      isLast: false,
+    };
+  }
+
   // ==================== 私有方法 ====================
 
   /**
