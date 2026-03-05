@@ -18,6 +18,9 @@ const RankingPage = lazy(() => import('./pages/ranking/RankingPage'));
 const AchievementPage = lazy(() => import('./pages/achievement/AchievementPage'));
 const ProfilePage = lazy(() => import('./pages/profile/ProfilePage'));
 const WrongBookPage = lazy(() => import('./pages/learning/WrongBookPage'));
+const FriendsPage = lazy(() => import('./pages/friends/FriendsPage'));
+const ChallengePage = lazy(() => import('./pages/challenge/ChallengePage'));
+const SettingsPage = lazy(() => import('./pages/settings/SettingsPage'));
 
 // 加载组件
 const PageLoading = () => (
@@ -64,6 +67,9 @@ function App() {
             <Route path="/ranking" element={<RankingPage />} />
             <Route path="/achievements" element={<AchievementPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/friends" element={<FriendsPage />} />
+            <Route path="/challenge" element={<ChallengePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
 
           {/* 游戏路由（全屏） */}

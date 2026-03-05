@@ -23,6 +23,136 @@ import {
   emitExplosion,
 } from '@/utils/particleEngine';
 
+// ============ 连击等级配置 ============
+const COMBO_LEVELS = [
+  { min: 3,  max: 4,  label: 'NICE',    emoji: '✨', color: '#60EFFF', glow: 'rgba(96,239,255,0.6)',   shake: false, rainbow: false, fire: false },
+  { min: 5,  max: 6,  label: 'GREAT',   emoji: '🔥', color: '#FFD700', glow: 'rgba(255,215,0,0.7)',    shake: false, rainbow: false, fire: true  },
+  { min: 7,  max: 9,  label: 'AWESOME', emoji: '💥', color: '#FF6B35', glow: 'rgba(255,107,53,0.8)',   shake: true,  rainbow: false, fire: true  },
+  { min: 10, max: 14, label: 'INSANE',  emoji: '⚡', color: '#FF00FF', glow: 'rgba(255,0,255,0.9)',    shake: true,  rainbow: true,  fire: true  },
+  { min: 15, max: 999,label: 'GODLIKE', emoji: '🌈', color: '#FFFFFF', glow: 'rgba(255,255,255,1.0)',  shake: true,  rainbow: true,  fire: true  },
+];
+
+const getComboLevel = (combo: number) =>
+  COMBO_LEVELS.find(l => combo >= l.min && combo <= l.max) ?? null;
+
+// ============ 连击失败浮层组件 ============
+interface MissDisplayProps {
+  brokenCombo: number; // 被打断时的连击数（0 = 普通错误，>0 = 连击中断）
+  visible: boolean;
+}
+
+const MISS_MESSAGES = [
+  { min: 0,  max: 0,  text: '输入错误',   sub: 'Wrong!',      emoji: '❌', color: '#FF6B6B' },
+  { min: 1,  max: 2,  text: '连击中断',   sub: 'Combo Break!', emoji: '💔', color: '#FF8C42' },
+  { min: 3,  max: 6,  text: '连击打断！', sub: 'Combo Lost!',  emoji: '😤', color: '#FF4757' },
+  { min: 7,  max: 11, text: '连击崩了！', sub: 'Streak Gone!', emoji: '😱', color: '#FF2D55' },
+  { min: 12, max: 999,text: '连击毁灭！', sub: 'DESTROYED!',   emoji: '💀', color: '#FF0040' },
+];
+
+const getMissMessage = (brokenCombo: number) =>
+  MISS_MESSAGES.slice().reverse().find(m => brokenCombo >= m.min) ?? MISS_MESSAGES[0];
+
+const MissDisplay = ({ brokenCombo, visible }: MissDisplayProps) => {
+  if (!visible) return null;
+  const msg = getMissMessage(brokenCombo);
+  const isHighCombo = brokenCombo >= 7;
+  const isEpic = brokenCombo >= 12;
+
+  return (
+    <div className={`miss-overlay ${isEpic ? 'miss-epic' : isHighCombo ? 'miss-high' : ''}`}>
+      {/* 红色震屏 */}
+      {brokenCombo >= 3 && <div className="miss-screen-flash" />}
+
+      {/* 破碎粒子 */}
+      {brokenCombo >= 1 && (
+        <div className="miss-shards">
+          {Array.from({ length: isEpic ? 16 : 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="miss-shard"
+              style={{
+                '--i': i,
+                '--total': isEpic ? 16 : 8,
+                '--color': msg.color,
+              } as React.CSSProperties}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* 主体内容 */}
+      <div className="miss-main" style={{ '--color': msg.color } as React.CSSProperties}>
+        <div className="miss-emoji">{msg.emoji}</div>
+        <div className="miss-text">{msg.text}</div>
+        {brokenCombo > 0 && (
+          <div className="miss-combo-lost">
+            <span className="miss-combo-num">x{brokenCombo}</span>
+            <span className="miss-combo-label"> 连击归零</span>
+          </div>
+        )}
+        <div className="miss-sub">{msg.sub}</div>
+      </div>
+
+      {/* 高连击时的裂纹效果 */}
+      {isHighCombo && (
+        <div className="miss-cracks">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="miss-crack" style={{ '--i': i } as React.CSSProperties} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============ 连击浮层组件 ============
+interface ComboDisplayProps {
+  combo: number;
+  visible: boolean;
+}
+
+const ComboDisplay = ({ combo, visible }: ComboDisplayProps) => {
+  const level = getComboLevel(combo);
+  if (!level || !visible) return null;
+
+  const tier = COMBO_LEVELS.indexOf(level); // 0~4
+
+  return (
+    <div className={classNames('combo-overlay', `combo-tier-${tier}`, { 'combo-visible': visible })}>
+      {/* 震屏遮罩 */}
+      {level.shake && <div className="combo-screen-flash" />}
+
+      {/* 火焰粒子背景 */}
+      {level.fire && (
+        <div className="combo-fire-bg">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="combo-fire-particle" style={{ '--i': i } as React.CSSProperties} />
+          ))}
+        </div>
+      )}
+
+      {/* 彩虹光晕 */}
+      {level.rainbow && <div className="combo-rainbow-ring" />}
+
+      {/* 主体文字 */}
+      <div className="combo-main" style={{ '--glow': level.glow, '--color': level.color } as React.CSSProperties}>
+        <div className="combo-emoji">{level.emoji}</div>
+        <div className="combo-number">x{combo}</div>
+        <div className="combo-label">{level.label}!</div>
+      </div>
+
+      {/* 爆炸光线 */}
+      {tier >= 2 && (
+        <div className="combo-rays">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="combo-ray" style={{ '--angle': `${i * 45}deg` } as React.CSSProperties} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // 泡泡颜色方案 - 更强烈的玻璃质感
 const bubbleColors = [
   {
@@ -276,6 +406,11 @@ const GamePage = () => {
   const [sfxEnabled, setSfxEnabled] = useState(isSoundEnabled());
   const [volume, setVolume] = useState(getMasterVolume());
   const settingsRef = useRef<HTMLDivElement>(null);
+  const [comboVisible, setComboVisible] = useState(false);
+  const comboTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [missVisible, setMissVisible] = useState(false);
+  const [missBrokenCombo, setMissBrokenCombo] = useState(0);
+  const missTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
     status,
@@ -301,6 +436,7 @@ const GamePage = () => {
     updateElapsedTime,
     resetGame,
     endGame,
+    incrementWrong,
   } = useGameStore();
 
   // 点击外部关闭设置面板
@@ -430,6 +566,14 @@ const GamePage = () => {
           setTimeout(() => playComboBonus(response.combo), 300);
         }
 
+        // 触发连击浮层
+        if (response.combo >= 3) {
+          if (comboTimerRef.current) clearTimeout(comboTimerRef.current);
+          setComboVisible(true);
+          const duration = response.combo >= 15 ? 3500 : response.combo >= 10 ? 3000 : response.combo >= 7 ? 2600 : 2200;
+          comboTimerRef.current = setTimeout(() => setComboVisible(false), duration);
+        }
+
         if (response.isCompleted) {
           await gameService.endGame({ gameRecordId });
           endGame();
@@ -439,9 +583,33 @@ const GamePage = () => {
         message.error((error as Error).message);
       }
     } else {
-      // 错误 - 卡壳音
+      // 错误 - 卡壳音 + 上报错误（保留输入框内容）
       playMisfire();
       shakeInput();
+
+      // 上报错误：取当前剩余单词中第一个（最早出现的）作为关联词
+      if (gameRecordId && remainingWords.length > 0) {
+        const targetWord = remainingWords[0];
+        // 记录当前连击数（上报前），用于显示"打断了多少连击"
+        const prevCombo = combo;
+        try {
+          const res = await gameService.reportWrong({
+            gameRecordId,
+            wordId: targetWord.id,
+          });
+          // 同步 store 中的 wrongCount 和 combo
+          incrementWrong(res.combo);
+        } catch {
+          // 上报失败时仍在本地记录错误
+          incrementWrong(0);
+        }
+        // 触发失败浮层
+        if (missTimerRef.current) clearTimeout(missTimerRef.current);
+        setMissBrokenCombo(prevCombo);
+        setMissVisible(true);
+        const missDuration = prevCombo >= 12 ? 3200 : prevCombo >= 7 ? 2800 : prevCombo >= 3 ? 2400 : 1800;
+        missTimerRef.current = setTimeout(() => setMissVisible(false), missDuration);
+      }
     }
   }, [gameRecordId, userInput, remainingWords, ensureAudio]);
 
@@ -478,6 +646,11 @@ const GamePage = () => {
 
   return (
     <div className="game-page" onClick={ensureAudio}>
+      {/* 连击浮层 */}
+      <ComboDisplay combo={combo} visible={comboVisible} />
+      {/* 连击失败浮层 */}
+      <MissDisplay brokenCombo={missBrokenCombo} visible={missVisible} />
+
       {/* 顶部状态栏 */}
       <div className="game-topbar">
         <div className="game-topbar-left">

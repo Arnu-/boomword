@@ -55,3 +55,4 @@ temp/
 
 # Docker
 docker-compose.override.yml
+apps/backend/core.*

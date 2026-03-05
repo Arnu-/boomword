@@ -16,9 +16,8 @@ async function bootstrap() {
   app.use(compression());
 
   // CORS配置
-  const corsOrigins = process.env.CORS_ORIGINS?.split(',') || ['http://localhost:5173'];
   app.enableCors({
-    origin: corsOrigins,
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
@@ -86,15 +85,16 @@ async function bootstrap() {
   }
 
   const port = process.env.PORT || 3000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
+  const serverUrl = await app.getUrl();
   console.log(`
   ╔═══════════════════════════════════════════════╗
   ║                                               ║
   ║   🎮 BoomWord API Server                      ║
   ║                                               ║
-  ║   Running on: http://localhost:${port}          ║
-  ║   API Docs:   http://localhost:${port}/docs     ║
+  ║   Running on: ${serverUrl}          ║
+  ║   API Docs:   ${serverUrl}/docs     ║
   ║   Environment: ${process.env.NODE_ENV || 'development'}                    ║
   ║                                               ║
   ╚═══════════════════════════════════════════════╝

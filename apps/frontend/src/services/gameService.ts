@@ -55,6 +55,17 @@ export interface EndGameParams {
   gameRecordId: string;
 }
 
+export interface ReportWrongParams {
+  gameRecordId: string;
+  wordId: string;
+}
+
+export interface ReportWrongResponse {
+  success: boolean;
+  wrongCount: number;
+  combo: number;
+}
+
 export interface EndGameResponse {
   gameRecordId: string;
   totalScore: number;
@@ -69,12 +80,14 @@ export interface EndGameResponse {
 export interface GameRecord {
   id: string;
   mode: GameMode;
-  totalWords: number;
-  correctWords: number;
-  wrongWords: number;
+  totalCount: number;
+  correctCount: number;
+  wrongCount: number;
   score: number;
   stars: number;
-  duration: number;
+  maxCombo: number;
+  accuracy: number;
+  timeUsed: number;
   createdAt: string;
   section: {
     id: string;
@@ -99,6 +112,11 @@ export const gameService = {
   // 提交答案
   submitAnswer: (params: SubmitAnswerParams): Promise<SubmitAnswerResponse> => {
     return api.post('/game/submit', params);
+  },
+
+  // 上报错误输入（不消耗单词机会）
+  reportWrong: (params: ReportWrongParams): Promise<ReportWrongResponse> => {
+    return api.post('/game/wrong', params);
   },
 
   // 结束游戏

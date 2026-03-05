@@ -362,6 +362,50 @@ export class GameService {
   }
 
   /**
+   * 上报错误输入（不消耗单词机会，仅记录错误次数和错题本）
+   */
+  async reportWrong(userId: string, dto: { gameRecordId: string; wordId: string }) {
+    // 获取游戏会话
+    const session = await this.getGameSession(dto.gameRecordId);
+    if (!session) {
+      throw new BadRequestException('游戏会话已过期或不存在');
+    }
+
+    if (session.userId !== userId) {
+      throw new ForbiddenException('无权操作此游戏');
+    }
+
+    if (session.isPaused) {
+      throw new BadRequestException('游戏已暂停');
+    }
+
+    // 检查单词是否在当前游戏中
+    const wordExists = session.words.some((w) => w.id === dto.wordId);
+    if (!wordExists) {
+      throw new BadRequestException('单词不在当前游戏中');
+    }
+
+    // 增加错误计数（不标记为已回答，不消耗单词）
+    session.wrongCount++;
+    session.currentCombo = 0;
+
+    // 保存会话
+    await this.saveGameSession(session);
+
+    // 记录到错题本
+    await this.recordWrongWord(userId, dto.wordId);
+
+    // 更新用户单词学习进度（标记为答错）
+    await this.updateUserWordProgress(userId, dto.wordId, false);
+
+    return {
+      success: true,
+      wrongCount: session.wrongCount,
+      combo: session.currentCombo,
+    };
+  }
+
+  /**
    * 暂停游戏
    */
   async pauseGame(userId: string, dto: PauseGameDto) {

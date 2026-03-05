@@ -51,6 +51,7 @@ interface GameActions {
   
   // 答题
   markWordAnswered: (wordId: string, result: { isCorrect: boolean; score: number; combo: number; maxCombo: number }) => void;
+  incrementWrong: (combo: number) => void;
   setUserInput: (input: string) => void;
   shakeInput: () => void;
   clearPoppingWord: () => void;
@@ -144,6 +145,13 @@ export const useGameStore = create<GameState & GameActions>()(
         if (state.answeredWordIds.length >= state.words.length) {
           state.status = 'finished';
         }
+      }),
+
+    // 仅增加错误计数和重置连击，不消耗单词
+    incrementWrong: (combo) =>
+      set((state) => {
+        state.wrongCount++;
+        state.combo = combo;
       }),
 
     setUserInput: (input) =>

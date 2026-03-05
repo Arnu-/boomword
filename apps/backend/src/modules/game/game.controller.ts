@@ -25,6 +25,7 @@ import {
   EndGameDto,
   PauseGameDto,
   ResumeGameDto,
+  ReportWrongDto,
   GameMode,
 } from './dto';
 
@@ -45,6 +46,12 @@ export class GameController {
   @ApiOperation({ summary: '提交答案', description: '提交单词答案' })
   async submitAnswer(@Request() req, @Body() dto: SubmitAnswerDto) {
     return this.gameService.submitAnswer(req.user.id, dto);
+  }
+
+  @Post('wrong')
+  @ApiOperation({ summary: '上报错误输入', description: '输入错误时上报，记录错误次数和错题本，不消耗单词机会' })
+  async reportWrong(@Request() req, @Body() dto: ReportWrongDto) {
+    return this.gameService.reportWrong(req.user.id, dto);
   }
 
   @Post('pause')

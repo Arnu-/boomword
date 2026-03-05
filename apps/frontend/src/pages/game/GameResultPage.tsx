@@ -41,8 +41,9 @@ const GameResultPage = () => {
     }
   };
 
-  const accuracy = record && record.totalWords > 0
-    ? Math.round((record.correctWords / record.totalWords) * 100)
+  const totalAttempts = record ? (record.correctCount + record.wrongCount) : 0;
+  const accuracy = totalAttempts > 0
+    ? Math.round((record!.correctCount / totalAttempts) * 100)
     : 0;
 
   // 根据表现选择 emoji 和标语
@@ -89,15 +90,15 @@ const GameResultPage = () => {
         {/* 统计行 */}
         <div className="game-result-stats">
           <div className="game-result-stat">
-            <span className="game-result-stat-value text-blue-300">{record.correctWords}</span>
+            <span className="game-result-stat-value text-blue-300">{record.correctCount}</span>
             <span className="game-result-stat-label">命中</span>
           </div>
           <div className="game-result-stat">
-            <span className="game-result-stat-value text-red-400">{record.wrongWords}</span>
+            <span className="game-result-stat-value text-red-400">{record.wrongCount}</span>
             <span className="game-result-stat-label">错误</span>
           </div>
           <div className="game-result-stat">
-            <span className="game-result-stat-value text-orange-400">{record.stars}</span>
+            <span className="game-result-stat-value text-orange-400">{record.maxCombo}</span>
             <span className="game-result-stat-label">最高连击</span>
           </div>
           <div className="game-result-stat">
