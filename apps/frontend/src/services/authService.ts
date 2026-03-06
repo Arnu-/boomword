@@ -32,14 +32,33 @@ export interface AuthResponse {
 
 // 后端返回的原始格式
 interface BackendAuthResponse {
-  user: AuthResponse['user'];
+  user: {
+    id: string;
+    nickname: string;
+    email?: string;
+    phone?: string;
+    avatar?: string;
+    role?: string;
+    level: number;
+    exp: number;
+  };
   token: string;
   refreshToken: string;
 }
 
 // 转换后端响应为前端格式
 const transformAuthResponse = (data: BackendAuthResponse): AuthResponse => ({
-  user: data.user,
+  user: {
+    id: data.user.id,
+    nickname: data.user.nickname,
+    email: data.user.email,
+    phone: data.user.phone,
+    avatar: data.user.avatar,
+    role: data.user.role,
+    level: data.user.level,
+    experience: data.user.exp || 0,
+    dailyGoal: 20,
+  },
   accessToken: data.token,
   refreshToken: data.refreshToken,
 });

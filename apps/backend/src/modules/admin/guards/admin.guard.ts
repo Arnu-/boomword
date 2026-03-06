@@ -23,7 +23,7 @@ export class AdminGuard implements CanActivate {
       select: { role: true },
     });
 
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
       throw new ForbiddenException('无管理员权限');
     }
 

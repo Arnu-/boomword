@@ -11,7 +11,10 @@ import {
   SettingOutlined,
   HomeOutlined,
 } from '@ant-design/icons';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Suspense } from 'react';
+import { Spin } from 'antd';
+import PageTransition from '@/components/PageTransition';
 import { useAuthStore } from '@/stores/authStore';
 
 const { Header, Sider, Content } = Layout;
@@ -234,7 +237,15 @@ export default function AdminLayout() {
             minHeight: 'calc(100vh - 64px)',
           }}
         >
-          <Outlet />
+          <Suspense
+            fallback={
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+                <Spin size="large" />
+              </div>
+            }
+          >
+            <PageTransition />
+          </Suspense>
         </Content>
       </Layout>
     </Layout>

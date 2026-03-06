@@ -28,10 +28,35 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
 const AdminWordBanksPage = lazy(() => import('./pages/admin/AdminWordBanksPage'));
 
-// 加载组件
+// 加载组件 - 仅用于首次加载，使用渐入动画避免突兀
 const PageLoading = () => (
-  <div className="h-screen w-screen flex items-center justify-center">
-    <Spin size="large" tip="加载中..." />
+  <div
+    style={{
+      height: '100vh',
+      width: '100vw',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#0D1117',
+      animation: 'fadeIn 0.3s ease-out',
+    }}
+  >
+    <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ fontSize: 40, marginBottom: 16 }}>🫧</div>
+      <div
+        style={{
+          width: 32,
+          height: 32,
+          border: '3px solid rgba(108,92,231,0.2)',
+          borderTopColor: '#6C5CE7',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+          margin: '0 auto',
+        }}
+      />
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+    </div>
   </div>
 );
 

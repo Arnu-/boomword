@@ -87,6 +87,7 @@ export class AuthService {
         avatar: user.avatarUrl,
         level: 1,
         exp: 0,
+        role: user.role,
       },
       ...tokens,
     };
@@ -153,6 +154,7 @@ export class AuthService {
         avatar: user.avatarUrl,
         level: user.level?.level || 1,
         exp: user.level?.currentExp || 0,
+        role: user.role,
       },
       ...tokens,
     };

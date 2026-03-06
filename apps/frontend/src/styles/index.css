@@ -2,6 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============ 全局过渡动画关键帧 ============ */
+
+/* 普通页面进入动画（在 MainLayout 内的页面切换） */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 全屏页面进入动画（游戏页、结果页等跨布局切换） */
+@keyframes fullscreenEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* 基础样式 */
 :root {
   --primary-color: #3b82f6;
@@ -832,6 +858,7 @@ body {
   flex-direction: column;
   overflow: hidden;
   color: #E6EDF3;
+  animation: fullscreenEnter 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 /* 顶部状态栏 */
@@ -1393,6 +1420,7 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 100;
+  animation: fullscreenEnter 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 .game-result-card {
@@ -2017,6 +2045,15 @@ body {
 .miss-overlay         { --miss-duration: 1.8s; }
 .miss-overlay.miss-high { --miss-duration: 2.8s; }
 .miss-overlay.miss-epic { --miss-duration: 3.2s; }
+
+/* ============ 页面切换过渡 ============ */
+
+/* 确保过渡容器撑满内容区 */
+.dark-content > div {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
 
 /* Ant Design 覆盖样式 */
 .ant-btn-primary {

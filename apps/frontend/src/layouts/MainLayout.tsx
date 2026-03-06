@@ -1,5 +1,6 @@
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Avatar } from 'antd';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Avatar, Spin } from 'antd';
+import { Suspense } from 'react';
 import {
   ThunderboltOutlined,
   AppstoreOutlined,
@@ -14,6 +15,7 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import { useLearningStore } from '@/stores/learningStore';
 import AnnouncementBar from '@/components/AnnouncementBar';
+import PageTransition from '@/components/PageTransition';
 
 interface SidebarItem {
   key: string;
@@ -141,7 +143,24 @@ const MainLayout = () => {
 
       {/* 内容区域 */}
       <div className="dark-content" style={{ paddingBottom: 0 }}>
-        <Outlet />
+        <Suspense
+          fallback={
+            <div
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                opacity: 0.6,
+              }}
+            >
+              <Spin size="large" />
+            </div>
+          }
+        >
+          <PageTransition />
+        </Suspense>
       </div>
 
       {/* 底部公告栏 */}
