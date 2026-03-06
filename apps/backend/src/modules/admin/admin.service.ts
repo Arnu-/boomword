@@ -307,8 +307,44 @@ export class AdminService {
       this.prisma.wordBank.count({ where }),
     ]);
 
+    // 实时统计每个词库的真实单词数
+    const wordBankIds = wordBanks.map((wb) => wb.id);
+    const wordCountResults = await this.prisma.sectionWord.groupBy({
+      by: ['sectionId'],
+      where: {
+        section: {
+          chapter: {
+            wordBankId: { in: wordBankIds },
+          },
+        },
+      },
+      _count: { id: true },
+    });
+
+    // 通过 section -> chapter -> wordBank 映射统计每个词库的单词数
+    const sectionIds = wordCountResults.map((r) => r.sectionId);
+    const sections = await this.prisma.section.findMany({
+      where: { id: { in: sectionIds } },
+      select: { id: true, chapter: { select: { wordBankId: true } } },
+    });
+
+    const sectionToWordBank = new Map(
+      sections.map((s) => [s.id, s.chapter.wordBankId]),
+    );
+
+    const realWordCountMap = new Map<string, number>();
+    for (const r of wordCountResults) {
+      const wbId = sectionToWordBank.get(r.sectionId);
+      if (wbId) {
+        realWordCountMap.set(wbId, (realWordCountMap.get(wbId) || 0) + r._count.id);
+      }
+    }
+
     return {
-      items: wordBanks,
+      items: wordBanks.map((wb) => ({
+        ...wb,
+        wordCount: realWordCountMap.get(wb.id) ?? wb.wordCount,
+      })),
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }

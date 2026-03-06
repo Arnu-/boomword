@@ -101,6 +101,11 @@ export interface GameRecord {
       };
     };
   };
+  nextSection: {
+    id: string;
+    name: string;
+    wordCount: number;
+  } | null;
 }
 
 export interface NextSectionInfo {

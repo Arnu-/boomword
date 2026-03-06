@@ -572,8 +572,8 @@ export class GameService {
       data: updateData,
     });
 
-    // 如果获得至少1星，解锁下一个小节
-    if (stars >= 1) {
+    // 只有挑战模式（challenge/speed）获得至少1星才解锁下一个小节
+    if (stars >= 1 && session.mode !== GameMode.PRACTICE) {
       await this.unlockNextSection(userId, session.sectionId);
     }
 
@@ -586,8 +586,10 @@ export class GameService {
       existingUserSection?.[`${modePrefix}Completed`] as boolean,
     );
 
-    // 更新排行榜分数
-    await this.updateRankingScore(userId, session.totalScore);
+    // 只有挑战模式才计入排行榜
+    if (session.mode !== GameMode.PRACTICE) {
+      await this.updateRankingScore(userId, session.totalScore);
+    }
 
     // 更新用户词库进度
     await this.updateUserWordBankProgress(userId, session.sectionId);
@@ -683,7 +685,24 @@ export class GameService {
       throw new NotFoundException('游戏记录不存在');
     }
 
-    return record;
+    // 仅挑战模式才查询下一小节（训练模式不解锁，不显示下一节入口）
+    let nextSection = null;
+    if (record.mode === GameMode.CHALLENGE) {
+      nextSection = await this.prisma.section.findFirst({
+        where: {
+          chapterId: record.section.chapterId,
+          order: { gt: record.section.order },
+          isActive: true,
+        },
+        orderBy: { order: 'asc' },
+        select: { id: true, name: true, wordCount: true },
+      });
+    }
+
+    return {
+      ...record,
+      nextSection: nextSection ?? null,
+    };
   }
 
   /**
