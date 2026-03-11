@@ -54,8 +54,11 @@ COPY --from=builder /app/apps/backend/package.json ./apps/backend/
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 COPY --from=builder /app/apps/backend/prisma ./apps/backend/prisma
 
-# 仅安装生产依赖，跳过 husky prepare 脚本
-RUN HUSKY=0 pnpm install --prod --frozen-lockfile
+# 复制 package.json 并删除 prepare 脚本 (生产环境不需要 husky)
+RUN sed -i '/"prepare":/d' package.json
+
+# 仅安装生产依赖
+RUN pnpm install --prod --frozen-lockfile
 
 # 生成 Prisma Client
 RUN cd apps/backend && npx prisma generate
