@@ -54,8 +54,8 @@ COPY --from=builder /app/apps/backend/package.json ./apps/backend/
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 COPY --from=builder /app/apps/backend/prisma ./apps/backend/prisma
 
-# 仅安装生产依赖
-RUN pnpm install --prod --frozen-lockfile
+# 仅安装生产依赖，忽略 scripts
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # 在 runner 阶段生成 Prisma Client
 RUN cd apps/backend && pnpm prisma generate
