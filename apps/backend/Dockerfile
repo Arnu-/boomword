@@ -54,11 +54,11 @@ COPY --from=builder /app/apps/backend/package.json ./apps/backend/
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 COPY --from=builder /app/apps/backend/prisma ./apps/backend/prisma
 
-# 仅安装生产依赖，忽略 scripts
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+# 仅安装生产依赖，跳过 husky prepare 脚本
+RUN HUSKY=0 pnpm install --prod --frozen-lockfile
 
-# 在 runner 阶段生成 Prisma Client
-RUN cd apps/backend && pnpm prisma generate
+# 生成 Prisma Client
+RUN cd apps/backend && npx prisma generate
 
 # 设置环境变量
 ENV NODE_ENV=production
