@@ -1,5 +1,8 @@
 # 构建阶段
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
+
+# 安装编译依赖 (bcrypt 需要)
+RUN apk add --no-cache python3 make g++ openssl-dev
 
 # 安装 pnpm
 RUN npm install -g pnpm
@@ -30,7 +33,7 @@ RUN cd apps/backend && pnpm prisma generate
 RUN pnpm --filter @boomword/backend build
 
 # 生产阶段
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 
 RUN npm install -g pnpm
 
@@ -50,10 +53,12 @@ COPY --from=builder /app/packages/utils/dist ./packages/utils/dist
 COPY --from=builder /app/apps/backend/package.json ./apps/backend/
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 COPY --from=builder /app/apps/backend/prisma ./apps/backend/prisma
-COPY --from=builder /app/apps/backend/node_modules/.prisma ./apps/backend/node_modules/.prisma
 
 # 仅安装生产依赖
 RUN pnpm install --prod --frozen-lockfile
+
+# 在 runner 阶段生成 Prisma Client
+RUN cd apps/backend && pnpm prisma generate
 
 # 设置环境变量
 ENV NODE_ENV=production

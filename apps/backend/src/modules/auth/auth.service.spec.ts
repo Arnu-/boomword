@@ -9,7 +9,7 @@ import {
   ConflictException,
   UnauthorizedException,
 } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 // Mock bcrypt
 jest.mock('bcrypt');
